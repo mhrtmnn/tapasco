@@ -122,6 +122,8 @@ static inline long zynq_ioctl_copyto(struct tlkm_device *inst,
 				     struct tlkm_copy_cmd *cmd)
 {
 	struct dma_buf_t *dmab;
+
+	pr_alert("================== COPY TO (%s) ===============\n", __func__);
 	DEVLOG(inst->dev_id, TLKM_LF_IOCTL,
 	       "copyto: len = %zu, dma = %pad, p = 0x%px", cmd->length,
 	       &cmd->dev_addr, cmd->user_addr);
@@ -165,6 +167,8 @@ static inline long zynq_ioctl_copyfrom(struct tlkm_device *inst,
 				       struct tlkm_copy_cmd *cmd)
 {
 	struct dma_buf_t *dmab;
+
+	pr_alert("================== COPY FROM (%s) ===============\n", __func__);
 	DEVLOG(inst->dev_id, TLKM_LF_DEVICE,
 	       "copyfrom: len = %zu, dma = %pad, p = 0x%px", cmd->length,
 	       &cmd->dev_addr, cmd->user_addr);

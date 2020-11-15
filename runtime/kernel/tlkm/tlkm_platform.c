@@ -34,6 +34,9 @@ int tlkm_platform_status_init(struct tlkm_device *dev,
 {
 	int retval = 0;
 	struct platform *p = &dev->cls->platform;
+
+	pr_alert("=========>> base_offset = 0x%px\n", (void*)dev->base_offset);
+
 	DEVLOG(dev->dev_id, TLKM_LF_DEVICE,
 	       "I/O mapping 0x%px-0x%px for status",
 	       (void *)(dev->base_offset + p->status.base),

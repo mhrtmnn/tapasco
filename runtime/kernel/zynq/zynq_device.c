@@ -115,9 +115,11 @@ int zynq_device_probe(struct tlkm_class *cls)
 int zynqmp_device_probe(struct tlkm_class *cls)
 {
 	struct tlkm_device *inst;
+	struct device_node *nd;
 	LOG(TLKM_LF_DEVICE, "searching for Xilinx Zynq-MP series devices ...");
-	if (of_find_matching_node(NULL, zynqmp_ids)) {
+	if ((nd = of_find_matching_node(NULL, zynqmp_ids))) {
 		LOG(TLKM_LF_DEVICE, "found Xilinx Zynq-MP");
+		pr_alert("===> of node phandle=%x\n", nd->phandle);
 		inst = tlkm_bus_new_device(cls, 0, 0, NULL);
 		if (!inst)
 			return -EFAULT;
