@@ -321,7 +321,7 @@ fn test_copy(_: &ArgMatches) -> Result<()> {
 
         let mut small_rng = StdRng::from_entropy();
 
-        for len_pow in 0..28 {
+        for len_pow in 0..5 {
             let len = i32::pow(2, len_pow);
             println!("Checking {}", HumanBytes(len as u64));
             let a = mem

@@ -29,9 +29,10 @@
 #include <string.h>
 #include <tapasco.h>
 #include <unistd.h>
+#include <time.h>
 
 #define SZ 256
-#define RUNS 25
+#define RUNS 5
 
 #define PE_ID 10
 
@@ -45,7 +46,7 @@ void handle_error() {
 
 static void init_array(int *arr, size_t sz) {
   for (size_t i = 0; i < sz; ++i)
-    arr[i] = i;
+    arr[i] = rand() % 1000;
 }
 
 static int arraysum(int *arr) {
@@ -59,6 +60,7 @@ static int arraysum(int *arr) {
 int main(int argc, char **argv) {
   int errs_total = 0;
   int ret = 0;
+  srand(time(NULL));
 
   // initialize threadpool
   tapasco_init_logging();
@@ -162,7 +164,7 @@ int main(int argc, char **argv) {
 
     free(arr);
 
-    printf("FPGA output for run %d: %llu\n", run, (long long unsigned int)r);
+    printf("FPGA   output for run %d: %llu\n", run, (long long unsigned int)r);
     printf("\nRUN %d %s\n", run, r == golden ? "OK" : "NOT OK");
   }
 
