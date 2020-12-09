@@ -24,6 +24,7 @@ use crate::tlkm::tlkm_copy_cmd_from;
 use crate::tlkm::tlkm_copy_cmd_to;
 use crate::tlkm::tlkm_ioctl_copy_from;
 use crate::tlkm::tlkm_ioctl_copy_to;
+use crate::vfio::*;
 use core::fmt::Debug;
 use memmap::MmapMut;
 use snafu::ResultExt;
@@ -141,6 +142,75 @@ impl DMAControl for DriverDMA {
         Ok(())
     }
 }
+
+#[derive(Debug, Getters)]
+pub struct VfioDMA {
+    tlkm_file: Arc<File>,
+    vfio_dev: Arc<VfioDev>,
+}
+
+impl VfioDMA {
+    pub fn new(tlkm_file: &Arc<File>, vfio_dev: &Arc<VfioDev>) -> VfioDMA {
+        VfioDMA {
+            tlkm_file: tlkm_file.clone(),
+            vfio_dev: vfio_dev.clone(),
+        }
+    }
+}
+
+/// Use VFIO to give PE access to virtual addresses using the SMMU
+///
+/// Is currently used for ZynqMP based devices.
+impl DMAControl for VfioDMA {
+    fn copy_to(&self, data: &[u8], ptr: DeviceAddress) -> Result<()> {
+        error!(
+            "WHOOOP!  Copy Host({:?}) -> Device(0x{:x}) ({} Bytes)",
+            data.as_ptr(),
+            ptr,
+            data.len()
+        );
+    
+        let pagesize = 4096;
+        let pages = data.len() / pagesize + 1; // round to next highest page boundary
+        let map_len = pages * pagesize;
+
+        // obviously this needs to be fixed, cannot copy buffer every time
+        let mut src_buf = MmapMut::map_anon(map_len).unwrap();
+        src_buf[0..data.len()].copy_from_slice(data);
+
+        // for i in 0..20 {
+        //     error!("Content: orig {} cpy {}", data[i], src_buf[i]);
+        // }
+
+        error!("Allocating {} bytes for va 0x{:x} iova 0x{:x}", map_len, src_buf.as_ptr() as u64, ptr);
+        vfio_dma_map(&self.vfio_dev, map_len as u64, ptr, src_buf.as_ptr() as u64);
+
+        Ok(())
+    }
+
+    fn copy_from(&self, ptr: DeviceAddress, data: &mut [u8]) -> Result<()> {
+        error!(
+            "WHOOP!   Copy Device(0x{:x}) -> Host({:?}) ({} Bytes)",
+            ptr,
+            data.as_mut_ptr(),
+            data.len()
+        );
+        unsafe {
+            tlkm_ioctl_copy_from(
+                self.tlkm_file.as_raw_fd(),
+                &mut tlkm_copy_cmd_from {
+                    dev_addr: ptr,
+                    length: data.len(),
+                    user_addr: data.as_mut_ptr(),
+                },
+            )
+            .context(DMAFromDevice)?;
+        };
+        Ok(())
+    }
+}
+
+
 
 /// Use the CPU to transfer data
 ///

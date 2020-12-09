@@ -23,6 +23,7 @@ use crate::device::DeviceSize;
 use crate::tlkm::tlkm_ioctl_alloc;
 use crate::tlkm::tlkm_ioctl_free;
 use crate::tlkm::tlkm_mm_cmd;
+use crate::vfio::*;
 use core::fmt::Debug;
 use snafu::ResultExt;
 use std::fs::File;
@@ -461,5 +462,71 @@ impl Allocator for DriverAllocator {
         };
         unsafe { tlkm_ioctl_free(self.tlkm_file.as_raw_fd(), &mut cmd).context(IOCTLFree)? };
         Ok(())
+    }
+}
+
+
+/// Allocate memory through VFIO
+#[derive(Debug, Getters)]
+pub struct VfioAllocator {
+    tlkm_file: Arc<File>,
+    vfio_dev: Arc<VfioDev>,
+}
+impl VfioAllocator {
+    pub fn new(tlkm_file: &Arc<File>, vfio_dev: &Arc<VfioDev>) -> Result<VfioAllocator> {
+        Ok(VfioAllocator {
+            tlkm_file: tlkm_file.clone(),
+            vfio_dev: vfio_dev.clone(),
+        })
+    }
+}
+
+impl Allocator for VfioAllocator {
+    fn allocate(&mut self, size: DeviceSize) -> Result<DeviceAddress> {
+        error!("WHEEP! Allocating {} bytes through driver.", size);
+
+        let offset = 0x800000000; // AXI Offset IP block between PE and PS
+        let iova = offset + if self.vfio_dev.mappings.lock().unwrap().is_empty() {
+            0
+        } else {
+            let maps = self.vfio_dev.mappings.lock().unwrap();
+            maps.last().unwrap().iova + maps.last().unwrap().size
+        };
+
+        let pagesize = 4096;
+        let pages = size / pagesize + 1; // round to next highest page boundary
+        let map_len = pages * pagesize;
+
+        self.vfio_dev.mappings.lock().unwrap().push(VfioMapping{
+            size: map_len,
+            iova
+        });
+        Ok(iova)
+    }
+
+    fn allocate_fixed(
+        &mut self,
+        _size: DeviceSize,
+        _offset: DeviceAddress,
+    ) -> Result<DeviceAddress> {
+        Err(Error::NoFixedInDriver {})
+    }
+
+    fn free(&mut self, ptr: DeviceAddress) -> Result<()> {
+        error!("WHEEP! Dellocating address 0x{:x} through driver.", ptr);
+
+        let maps = self.vfio_dev.mappings.lock().unwrap(); // take mutex
+        for i in 0..maps.len() {
+            let m = &maps[i];
+
+            if ptr == m.iova {
+                error!("====> Found!");
+                vfio_dma_unmap(&self.vfio_dev, m.iova, m.size);
+                return Ok(());
+            }
+        }
+        error!("====> Did not find region to unmap!");
+        Err(Error::UnknownMemory{ptr})
+        // once maps goes out of scope, the mutex is unlocked
     }
 }
