@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use crate::allocator::{Allocator, DriverAllocator, GenericAllocator};
+use crate::allocator::{Allocator, DriverAllocator, GenericAllocator, VfioAllocator};
 use crate::debug::DebugGenerator;
-use crate::dma::{DMAControl, DirectDMA, DriverDMA};
+use crate::dma::{DMAControl, DirectDMA, DriverDMA, VfioDMA};
 use crate::dma_user_space::UserSpaceDMA;
 use crate::job::Job;
 use crate::pe::PEId;
@@ -30,6 +30,7 @@ use crate::tlkm::tlkm_ioctl_create;
 use crate::tlkm::tlkm_ioctl_destroy;
 use crate::tlkm::tlkm_ioctl_device_cmd;
 use crate::tlkm::DeviceId;
+use crate::vfio::*;
 use config::Config;
 use memmap::MmapMut;
 use memmap::MmapOptions;
@@ -244,6 +245,9 @@ impl Device {
     ) -> Result<Device> {
         trace!("Open driver device file.");
 
+        // TODO: clean up
+        let vfio_mode = !true;
+
         let tlkm_dma_file = Arc::new(
             OpenOptions::new()
                 .read(true)
@@ -375,13 +379,27 @@ impl Device {
                     .context(DMAError)?,
                 ),
             }));
-        } else if name == "zynq" || name == "zynqmp" {
+        } else if name == "zynq" || (name == "zynqmp" && !vfio_mode) {
             info!("Using driver allocation for Zynq/ZynqMP based platform.");
             allocator.push(Arc::new(OffchipMemory {
                 allocator: Mutex::new(Box::new(
                     DriverAllocator::new(&tlkm_dma_file).context(AllocatorError)?,
                 )),
                 dma: Box::new(DriverDMA::new(&tlkm_dma_file)),
+            }));
+        } else if name == "zynqmp" {
+            let dev = init_vfio(4).unwrap();
+            vfio_get_info(&dev);
+            vfio_get_region_info(&dev);
+            // vfio_test(&dev);
+
+            let arc_vfio = Arc::new(dev);
+
+            allocator.push(Arc::new(OffchipMemory {
+                allocator: Mutex::new(Box::new(
+                    VfioAllocator::new(&tlkm_dma_file, &arc_vfio).context(AllocatorError)?,
+                )),
+                dma: Box::new(VfioDMA::new(&tlkm_dma_file, &arc_vfio)),
             }));
         } else {
             return Err(Error::DeviceType { name: name });
