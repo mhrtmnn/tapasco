@@ -78,7 +78,7 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 /// Deals with data transfer parameter handling.
 #[derive(Debug)]
 pub struct Job {
-    pe: Option<PE>,
+    pub pe: Option<PE>, // HACK to enable FFI iface to write arbitrary addresses
     scheduler: Arc<Scheduler>,
 }
 

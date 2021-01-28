@@ -95,13 +95,13 @@ pub struct PE {
     id: usize,
     #[get = "pub"]
     type_id: PEId,
-    offset: DeviceAddress,
+    pub offset: DeviceAddress, // HACK to enable FFI iface to write arbitrary addresses
     size: DeviceSize,
     name: String,
     #[get = "pub"]
     active: bool,
     copy_back: Option<Vec<CopyBack>>,
-    memory: Arc<MmapMut>,
+    pub memory: Arc<MmapMut>, // HACK to enable FFI iface to write arbitrary addresses
 
     #[set = "pub"]
     #[get = "pub"]

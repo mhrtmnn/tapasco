@@ -41,6 +41,7 @@ use std::ptr;
 use std::slice;
 use std::sync::Arc;
 use std::u64;
+use volatile::Volatile;
 
 #[derive(Debug, Snafu)]
 pub enum Error {
@@ -875,4 +876,20 @@ pub unsafe extern "C" fn tapasco_version(buffer: *mut c_char, length: usize) -> 
 #[no_mangle]
 pub extern "C" fn tapasco_version_len() -> usize {
     VERSION.len() + 1
+}
+
+///////////////////////////////////
+// Debug
+///////////////////////////////////
+#[no_mangle]
+pub extern "C" fn tapasco_write_addr(job: *mut Job, offs: u64, value: u32) -> i32 {
+    let j = unsafe { &mut *job };
+    let pe = j.pe.as_ref().unwrap();
+    let offset = (pe.offset as usize + offs as usize) as isize;
+    trace!("Writing argument: 0x{:x} (PE offs 0x{:x}) -> {:?}", offset, offs, value);
+    unsafe {
+        let ptr = pe.memory.as_ptr().offset(offset);
+        (*(ptr as *mut Volatile<u32>)).write(value);
+    }
+    0
 }
