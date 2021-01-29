@@ -325,6 +325,10 @@
     connect_bd_intf_net [get_bd_intf_pins -of_objects $out_ic -filter {NAME == M02_AXI}] $m_tapasco
     connect_bd_intf_net [get_bd_intf_pins -of_objects $out_ic -filter {NAME == M03_AXI}] $m_dma
 
+    # temp fix for clock domain mismatch error:
+    # ERROR: [BD 41-237] Bus Interface property CLK_DOMAIN does not match between /arch/target_ip_00_000/S00_AXI_0(system_design_clk_wiz_0_design_clk) and /host/out_ic/M00_AXI(system_axi_pcie3_0_0_axi_aclk)
+    set_property CONFIG.ADVANCED_PROPERTIES {__view__ { clocking { M00_Exit { ASSOCIATED_CLK aclk1 } } }} $out_ic
+
     # forward PCIe clock to external ports
     connect_bd_net [get_bd_pins axi_pcie3_0/axi_aclk] $pcie_aclk
 
