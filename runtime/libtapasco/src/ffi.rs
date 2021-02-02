@@ -893,3 +893,16 @@ pub extern "C" fn tapasco_write_addr(job: *mut Job, offs: u64, value: u32) -> i3
     }
     0
 }
+
+#[no_mangle]
+pub extern "C" fn tapasco_read_addr(job: *mut Job, offs: u64) -> u32 {
+    let j = unsafe { &mut *job };
+    let pe = j.pe.as_ref().unwrap();
+    let offset = (pe.offset as usize + offs as usize) as isize;
+    trace!("Reading mem at offs 0x{:x}", offs);
+    unsafe {
+        let ptr = pe.memory.as_ptr().offset(offset as isize);
+        let volatile_ptr = ptr as *mut Volatile<u32>;
+        (*volatile_ptr).read()
+    }
+}
