@@ -140,20 +140,11 @@ namespace eval sfpplus {
         CONFIG.CMAC_CAUI4_MODE {1} \
         CONFIG.NUM_LANES {4x25} \
         CONFIG.USER_INTERFACE {AXIS} \
-        CONFIG.TX_FRAME_CRC_CHECKING {Enable FCS Insertion} \
-        CONFIG.RX_FRAME_CRC_CHECKING {Enable FCS Stripping} \
         CONFIG.GT_REF_CLK_FREQ {322.265625} \
-        CONFIG.TX_FLOW_CONTROL {1} \
-        CONFIG.RX_FLOW_CONTROL {1} \
+        CONFIG.TX_FLOW_CONTROL {0} \
+        CONFIG.RX_FLOW_CONTROL {0} \
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
-        CONFIG.RX_GT_BUFFER {1} \
-        CONFIG.GT_RX_BUFFER_BYPASS {0} \
-        CONFIG.INCLUDE_RS_FEC {1} \
-        CONFIG.RX_CHECK_ACK {1} \
-        CONFIG.RX_CHECK_PREAMBLE {1} \
-        CONFIG.RX_CHECK_SFD {1} \
-        CONFIG.RX_MAX_PACKET_LEN {16383} \
         CONFIG.CMAC_CORE_SELECT [lindex $cmac_cores $physical_port] \
         CONFIG.GT_GROUP_SELECT [lindex $gt_groups $physical_port]
         ] $core
@@ -198,15 +189,15 @@ namespace eval sfpplus {
 
 
       connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_enable]
-      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable]
-      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_correction]
-      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_indication]
-      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_tx_rsfec_enable]
-      connect_bd_net [get_bd_pins const_x100/dout] [get_bd_pins $core/ctl_tx_pause_req]
-      connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_rx_pause_enable]
-      connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_tx_pause_enable]
-      connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_quanta8]
-      connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_refresh_timer8]
+      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable]
+      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_correction]
+      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_indication]
+      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_tx_rsfec_enable]
+      # connect_bd_net [get_bd_pins const_x100/dout] [get_bd_pins $core/ctl_tx_pause_req]
+      # connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_rx_pause_enable]
+      # connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_tx_pause_enable]
+      # connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_quanta8]
+      # connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_refresh_timer8]
 
       connect_bd_net [get_bd_pins $core/stat_rx_aligned] [get_bd_pins $core/ctl_tx_enable]
 

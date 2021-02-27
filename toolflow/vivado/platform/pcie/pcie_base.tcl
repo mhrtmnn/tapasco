@@ -325,6 +325,8 @@
     connect_bd_intf_net [get_bd_intf_pins -of_objects $out_ic -filter {NAME == M02_AXI}] $m_tapasco
     connect_bd_intf_net [get_bd_intf_pins -of_objects $out_ic -filter {NAME == M03_AXI}] $m_dma
 
+	set_property CONFIG.ADVANCED_PROPERTIES {__view__ { clocking { M00_Exit { ASSOCIATED_CLK aclk1 } } }} $out_ic
+
     # forward PCIe clock to external ports
     connect_bd_net [get_bd_pins axi_pcie3_0/axi_aclk] $pcie_aclk
 
