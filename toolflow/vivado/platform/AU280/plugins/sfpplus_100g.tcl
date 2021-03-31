@@ -33,8 +33,6 @@ namespace eval sfpplus {
       set num_streams [dict size $ports]
 
       puts "Generating $num_streams SFPPLUS cores"
-      set constraints_fn "[get_property DIRECTORY [current_project]]/sfpplus.xdc"
-      set constraints_file [open $constraints_fn w+]
 
       # QSFP Ports
       set const_one [tapasco::ip::create_constant const_one 1 1]
@@ -67,29 +65,16 @@ namespace eval sfpplus {
       set first_port 0
       foreach port [dict keys $ports] {
         set name [dict get $ports $port]
-        generate_core $port $name $first_port $constraints_file
+        generate_core $port $name $first_port
         incr first_port 1
       }
-
-
-      ## TODO: maybe not needed
-      close $constraints_file
-      read_xdc $constraints_fn
-      set_property PROCESSING_ORDER NORMAL [get_files $constraints_fn]
     }
 
     # Generate a SFP+-Core to handle the ports of one physical cage
     # @param physical_port the number of the physical cage
     # @param name name of the port
     # @param first_port the first free master on the AXI-Lite Config interconnect
-    # @param constraints_file the file used for constraints
-    proc generate_core {physical_port name first_port constraints_file} {
-
-      # TODO: needed?
-      # Create and constrain refclk pin
-      # set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 gt_refclk_$physical_port]
-      # set_property CONFIG.FREQ_HZ 322265625 $gt_refclk
-      # puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] gt_refclk_${physical_port}_clk_p]
+    proc generate_core {physical_port name first_port} {
 
       # Create and configure core
       set core [tapasco::ip::create_100g_ethernet ethernet_$physical_port]
@@ -108,11 +93,6 @@ namespace eval sfpplus {
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
       ] $core
-
-      # should be auto connected
-      # connect_bd_intf_net $gt_refclk [get_bd_intf_pins $core/gt_ref_clk]
-      # make_bd_intf_pins_external [get_bd_intf_pins $core/gt_rx]
-      # make_bd_intf_pins_external [get_bd_intf_pins $core/gt_tx]
 
       connect_bd_net [get_bd_pins $core/sys_reset] [get_bd_pins dclk_reset/peripheral_reset]
       connect_bd_net [get_bd_pins $core/drp_clk] [get_bd_pins dclk_wiz/clk_out1]
