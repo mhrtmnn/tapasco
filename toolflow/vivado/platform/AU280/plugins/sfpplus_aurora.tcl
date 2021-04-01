@@ -80,7 +80,7 @@ namespace eval sfpplus {
       set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 qsfp${physical_port}_161mhz]
       # TODO: the refclk is actually 161132812
       set_property CONFIG.FREQ_HZ 161133125 $gt_refclk
-      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] qsfp${physical_port}_161mhz_p]
+      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] qsfp${physical_port}_161mhz_clk_p]
 
       # Create and configure core
       set core [tapasco::ip::create_aurora aurora_$physical_port]
