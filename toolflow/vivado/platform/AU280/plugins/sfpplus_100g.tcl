@@ -49,15 +49,6 @@ namespace eval sfpplus {
       # Reset Generator for dclk reset
       set dclk_reset [tapasco::ip::create_rst_gen dclk_reset]
 
-      # TODO: needed ?
-      # set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_0]
-      # set_property -dict [list CONFIG.C_NUM_PROBE_OUT {2}] $vio
-      # set_property -dict [list CONFIG.C_PROBE_OUT1_INIT_VAL {0x1}] $vio
-      # connect_bd_net [get_bd_pins design_clk] [get_bd_pins $vio/clk]
-
-      # set_property name qsfp_reset_l [get_bd_nets -of [get_bd_pins $vio/probe_out0]]
-      # set_property name core_reset [get_bd_nets -of [get_bd_pins $vio/probe_out1]]
-
       connect_bd_net [get_bd_pins $dclk_wiz/clk_out1] [get_bd_pins $dclk_reset/slowest_sync_clk]
       connect_bd_net [get_bd_pins design_peripheral_aresetn] [get_bd_pins $dclk_reset/ext_reset_in]
       connect_bd_net [get_bd_pins design_clk] [get_bd_pins $dclk_wiz/clk_in1]
@@ -90,6 +81,7 @@ namespace eval sfpplus {
         CONFIG.GT_REF_CLK_FREQ {156.25} \
         CONFIG.TX_FLOW_CONTROL {0} \
         CONFIG.RX_FLOW_CONTROL {0} \
+        CONFIG.INCLUDE_RS_FEC {1} \
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
       ] $core
@@ -115,13 +107,13 @@ namespace eval sfpplus {
       connect_bd_net [get_bd_pins $core/usr_rx_reset] [get_bd_pins $out_inv/Op1]
       connect_bd_net [get_bd_pins /Network/sfp_rx_resetn_${name}] [get_bd_pins $out_inv/Res]
 
-      # connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/core_rx_reset]
-      # connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/core_tx_reset]
-      # connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/gtwiz_reset_tx_datapath]
-      # connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/gtwiz_reset_rx_datapath]
-
       connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_enable]
       connect_bd_net [get_bd_pins $core/stat_rx_aligned] [get_bd_pins $core/ctl_tx_enable]
+
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_correction]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_indication]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_tx_rsfec_enable]
 
       set aligned_inverter [tapasco::ip::create_logic_vector aligned_inverter]
       set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] $aligned_inverter

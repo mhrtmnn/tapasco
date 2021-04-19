@@ -143,6 +143,7 @@ namespace eval sfpplus {
         CONFIG.GT_REF_CLK_FREQ {322.265625} \
         CONFIG.TX_FLOW_CONTROL {0} \
         CONFIG.RX_FLOW_CONTROL {0} \
+        CONFIG.INCLUDE_RS_FEC {1} \
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
         CONFIG.CMAC_CORE_SELECT [lindex $cmac_cores $physical_port] \
@@ -187,19 +188,13 @@ namespace eval sfpplus {
       connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/gtwiz_reset_tx_datapath]
       connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/gtwiz_reset_rx_datapath]
 
-
       connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_enable]
-      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable]
-      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_correction]
-      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_indication]
-      # connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_tx_rsfec_enable]
-      # connect_bd_net [get_bd_pins const_x100/dout] [get_bd_pins $core/ctl_tx_pause_req]
-      # connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_rx_pause_enable]
-      # connect_bd_net [get_bd_pins const_x1ff/dout] [get_bd_pins $core/ctl_tx_pause_enable]
-      # connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_quanta8]
-      # connect_bd_net [get_bd_pins const_xffff/dout] [get_bd_pins $core/ctl_tx_pause_refresh_timer8]
-
       connect_bd_net [get_bd_pins $core/stat_rx_aligned] [get_bd_pins $core/ctl_tx_enable]
+
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_correction]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_rx_rsfec_enable_indication]
+      connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins $core/ctl_tx_rsfec_enable]
 
       set aligned_inverter [tapasco::ip::create_logic_vector aligned_inverter]
       set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] $aligned_inverter
@@ -212,6 +207,5 @@ namespace eval sfpplus {
       set_property -dict [list CONFIG.C_SIZE {1} CONFIG.C_OPERATION {not} CONFIG.LOGO_FILE {data/sym_notgate.png}] [get_bd_cells $name]
       return $ret
     }
-
   }
 }
