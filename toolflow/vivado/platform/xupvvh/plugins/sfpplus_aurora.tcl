@@ -28,7 +28,6 @@ namespace eval sfpplus {
     variable fpga_i2c_master       "E17"
     variable qsfp_ctl_en           "C18"
     variable qsfp_rst              {"A21" "A19" "B16" "C19"}
-    variable qsfp_int_l            "B20"
     variable qsfp_lp               "B18"
 
     proc num_available_ports {} {
@@ -50,7 +49,6 @@ namespace eval sfpplus {
 
       variable fpga_i2c_master
       variable qsfp_ctl_en
-      variable qsfp_int_l
       variable qsfp_lp
 
       set port_fpga_i2c_master [create_bd_port -dir O fpga_i2c_master]
@@ -62,10 +60,6 @@ namespace eval sfpplus {
       puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports qsfp_ctl_en]} $qsfp_ctl_en]
       puts $constraints_file {set_property IOSTANDARD LVCMOS18 [get_ports qsfp_ctl_en]}
       connect_bd_net [get_bd_pins $const_one/dout] $port_qsfp_ctl_en
-
-      set port_qsfp_int_l [create_bd_port -dir I qsfp_int_l]
-      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports qsfp_int_l]} $qsfp_int_l]
-      puts $constraints_file {set_property IOSTANDARD LVCMOS18 [get_ports qsfp_int_l]}
 
       set port_qsfp_lp [create_bd_port -dir O qsfp_lp]
       puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports qsfp_lp]} $qsfp_lp]
@@ -79,12 +73,6 @@ namespace eval sfpplus {
       # Reset Generator for dclk reset
       set dclk_reset [tapasco::ip::create_rst_gen dclk_reset]
 
-      set vio [create_bd_cell -type ip -vlnv xilinx.com:ip:vio:3.0 vio_0]
-      set_property -dict [list CONFIG.C_NUM_PROBE_OUT {2}] $vio
-      set_property -dict [list CONFIG.C_PROBE_OUT1_INIT_VAL {0x1}] $vio
-      connect_bd_net $port_qsfp_int_l [get_bd_pins $vio/probe_in0]
-      connect_bd_net [get_bd_pins design_clk] [get_bd_pins $vio/clk]
-
       connect_bd_net [get_bd_pins $dclk_wiz/clk_out1] [get_bd_pins $dclk_reset/slowest_sync_clk]
       connect_bd_net [get_bd_pins design_peripheral_aresetn] [get_bd_pins $dclk_reset/ext_reset_in]
       connect_bd_net [get_bd_pins design_clk] [get_bd_pins $dclk_wiz/clk_in1]
@@ -95,9 +83,6 @@ namespace eval sfpplus {
         generate_core $port $name $first_port $constraints_file
         incr first_port 1
       }
-
-      set_property name qsfp_reset_l [get_bd_nets -of [get_bd_pins $vio/probe_out0]]
-      set_property name qsfp_int_l [get_bd_nets -of [get_bd_pins $vio/probe_in0]]
 
       close $constraints_file
       read_xdc $constraints_fn
@@ -118,7 +103,6 @@ namespace eval sfpplus {
       set port_qsfp_rst [create_bd_port -dir O qsfp_rst_l_$physical_port]
       puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $qsfp_rst $physical_port] qsfp_rst_l_$physical_port]
       puts $constraints_file [format {set_property IOSTANDARD LVCMOS18 [get_ports %s]} qsfp_rst_l_$physical_port]
-      connect_bd_net [get_bd_pins vio_0/probe_out0] $port_qsfp_rst
 
       # Create and constrain refclk pin
       set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 gt_refclk_$physical_port]
@@ -140,8 +124,11 @@ namespace eval sfpplus {
       ] $core
 
       connect_bd_intf_net $gt_refclk [get_bd_intf_pins $core/GT_DIFF_REFCLK1]
+
       connect_bd_net [get_bd_pins $core/reset_pb] [get_bd_pins dclk_reset/peripheral_reset]
       connect_bd_net [get_bd_pins $core/pma_init] [get_bd_pins dclk_reset/peripheral_reset]
+      connect_bd_net [get_bd_pins dclk_reset/peripheral_aresetn] $port_qsfp_rst
+
       make_bd_intf_pins_external [get_bd_intf_pins $core/GT_SERIAL_RX]
       make_bd_intf_pins_external [get_bd_intf_pins $core/GT_SERIAL_TX]
       connect_bd_net [get_bd_pins $core/init_clk] [get_bd_pins dclk_wiz/clk_out1]
@@ -157,9 +144,6 @@ namespace eval sfpplus {
       connect_bd_net [get_bd_pins $core/sys_reset_out] [get_bd_pins $out_inv/Op1]
       connect_bd_net [get_bd_pins /Network/sfp_tx_resetn_${name}] [get_bd_pins $out_inv/Res]
       connect_bd_net [get_bd_pins /Network/sfp_rx_resetn_${name}] [get_bd_pins $out_inv/Res]
-
-      # TODO: do we need a VIO again for reset?
-      # connect_bd_net [get_bd_pins vio_0/probe_out1] [get_bd_pins $core/core_rx_reset]
     }
 
     proc create_inverter {name} {
