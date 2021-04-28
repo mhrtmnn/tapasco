@@ -24,7 +24,7 @@ namespace eval sfpplus {
     variable available_ports 2
     variable start_quad            {"Quad_X0Y10" "Quad_X0Y11"}
     variable start_lane            {"X0Y40" "X0Y44"}
-    variable refclk_pins           {"T42" "P42"}
+    variable refclk_pins           {"R40" "M42"}
 
     proc num_available_ports {} {
       variable available_ports
@@ -77,20 +77,21 @@ namespace eval sfpplus {
       variable refclk_pins
 
       # Create and constrain refclk pin
-      set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 qsfp${physical_port}_156mhz]
-      set_property CONFIG.FREQ_HZ 156250000 $gt_refclk
-      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] qsfp${physical_port}_156mhz_clk_p]
+      set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 qsfp${physical_port}_161mhz]
+      set_property CONFIG.FREQ_HZ 161132813 $gt_refclk
+      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] qsfp${physical_port}_161mhz_clk_p]
 
       # Create and configure core
       set core [tapasco::ip::create_aurora aurora_$physical_port]
 
       set_property -dict [list \
         CONFIG.C_AURORA_LANES {4} \
-        CONFIG.C_LINE_RATE {25.0} \
+        CONFIG.C_LINE_RATE {25.78125} \
         CONFIG.C_USE_BYTESWAP {true} \
-        CONFIG.C_REFCLK_FREQUENCY {156.25} \
+        CONFIG.C_REFCLK_FREQUENCY {161.1328125} \
         CONFIG.C_INIT_CLK {100} \
         CONFIG.SupportLevel {1} \
+        CONFIG.RX_EQ_MODE {LPM} \
         CONFIG.C_UCOLUMN_USED {left} \
         CONFIG.C_START_QUAD [lindex $start_quad $physical_port] \
         CONFIG.C_START_LANE [lindex $start_lane $physical_port] \

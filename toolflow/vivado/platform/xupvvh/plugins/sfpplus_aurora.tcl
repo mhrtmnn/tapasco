@@ -22,7 +22,7 @@ namespace eval sfpplus {
   namespace eval Aurora {
 
     variable available_ports 4
-    variable refclk_pins           {"M13" "U15" "AC15" "AH13"}
+    variable refclk_pins           {"P13" "V13" "AD13" "AJ15"}
     variable start_quad            {"Quad_X1Y11" "Quad_X1Y9" "Quad_X1Y6" "Quad_X1Y4"}
     variable start_lane            {"X1Y44" "X1Y36" "X1Y24" "X1Y16"}
     variable fpga_i2c_master       "E17"
@@ -106,7 +106,7 @@ namespace eval sfpplus {
 
       # Create and constrain refclk pin
       set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 gt_refclk_$physical_port]
-      set_property CONFIG.FREQ_HZ 156250000 $gt_refclk
+      set_property CONFIG.FREQ_HZ 322265625 $gt_refclk
       puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] gt_refclk_${physical_port}_clk_p]
 
       # Create and configure core
@@ -114,11 +114,12 @@ namespace eval sfpplus {
 
       set_property -dict [list \
         CONFIG.C_AURORA_LANES {4} \
-        CONFIG.C_LINE_RATE {25.0} \
+        CONFIG.C_LINE_RATE {25.78125} \
         CONFIG.C_USE_BYTESWAP {true} \
-        CONFIG.C_REFCLK_FREQUENCY {156.25} \
+        CONFIG.C_REFCLK_FREQUENCY {322.265625} \
         CONFIG.C_INIT_CLK {100} \
         CONFIG.SupportLevel {1} \
+        CONFIG.RX_EQ_MODE {LPM} \
         CONFIG.C_START_QUAD [lindex $start_quad $physical_port] \
         CONFIG.C_START_LANE [lindex $start_lane $physical_port] \
       ] $core
