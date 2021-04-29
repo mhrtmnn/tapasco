@@ -25,6 +25,8 @@ namespace eval sfpplus {
     variable start_quad            {"Quad_X0Y10" "Quad_X0Y11"}
     variable start_lane            {"X0Y40" "X0Y44"}
     variable refclk_pins           {"R40" "M42"}
+    variable refclk_en_n_pins      {"H32" "H30"}
+    variable refclk_sel_pins       {"G32" "G33"}
 
     proc num_available_ports {} {
       variable available_ports
@@ -75,11 +77,28 @@ namespace eval sfpplus {
       variable start_quad
       variable start_lane
       variable refclk_pins
+      variable refclk_en_n_pins
+      variable refclk_sel_pins
+
+      set const_zero [tapasco::ip::create_constant const_zero 1 0]
+      set const_one [tapasco::ip::create_constant const_one 1 1]
 
       # Create and constrain refclk pin
       set gt_refclk [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 qsfp${physical_port}_161mhz]
       set_property CONFIG.FREQ_HZ 161132813 $gt_refclk
       puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_pins $physical_port] qsfp${physical_port}_161mhz_clk_p]
+
+      # Enable refclock
+      set refclk_en_n [create_bd_port -dir O reclk_en_n_$physical_port]
+      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_en_n_pins $physical_port] reclk_en_n_$physical_port]
+      puts $constraints_file [format {set_property IOSTANDARD LVCMOS18 [get_ports %s]} reclk_en_n_$physical_port]
+      connect_bd_net [get_bd_pins $const_zero/dout] $refclk_en_n
+
+      # Select refclock frequency (0 = 156.25 MHz, 1 = 161.132812 MHz)
+      set refclk_sel [create_bd_port -dir O reclk_sel_$physical_port]
+      puts $constraints_file [format {set_property PACKAGE_PIN %s [get_ports %s]} [lindex $refclk_sel_pins $physical_port] reclk_sel_$physical_port]
+      puts $constraints_file [format {set_property IOSTANDARD LVCMOS18 [get_ports %s]} reclk_sel_$physical_port]
+      connect_bd_net [get_bd_pins $const_one/dout] $refclk_sel
 
       # Create and configure core
       set core [tapasco::ip::create_aurora aurora_$physical_port]
