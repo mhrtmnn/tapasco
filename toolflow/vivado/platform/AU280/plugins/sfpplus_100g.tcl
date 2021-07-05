@@ -84,6 +84,7 @@ namespace eval sfpplus {
         CONFIG.INCLUDE_RS_FEC {1} \
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
+        CONFIG.RX_MAX_PACKET_LEN {16383} \
       ] $core
 
       connect_bd_net [get_bd_pins $core/sys_reset] [get_bd_pins dclk_reset/peripheral_reset]

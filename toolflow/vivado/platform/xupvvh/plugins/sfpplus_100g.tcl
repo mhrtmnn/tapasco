@@ -122,6 +122,7 @@ namespace eval sfpplus {
         CONFIG.INCLUDE_RS_FEC {1} \
         CONFIG.ENABLE_AXI_INTERFACE {0} \
         CONFIG.INCLUDE_STATISTICS_COUNTERS {0} \
+        CONFIG.RX_MAX_PACKET_LEN {16383} \
         CONFIG.CMAC_CORE_SELECT [lindex $cmac_cores $physical_port] \
         CONFIG.GT_GROUP_SELECT [lindex $gt_groups $physical_port]
         ] $core
